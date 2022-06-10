@@ -1,78 +1,79 @@
 import matplotlib
 
+from pid_regulator import PidRegulator
+
 matplotlib.use('Agg')
 
 import time
-import matplotlib.pyplot as plt
-import numpy as np
-from scipy.interpolate import make_interp_spline
 import random
-from pid_regulator import PidRegulator
+from ChartGenerator import ChartGenerator
+
+
+def print_chart(total_sampling):
+    chart = ChartGenerator(total_sampling)
+    chart.chart_generator()
+
+
+class PythonPID:
+
+    def __init__(self, P=1, I=0.01, D=0.01, first_pid_min_output=10, first_pid_max_output=40, second_pid_min_output=0,
+                 second_pid_max_output=100, total_sampling=100):
+        self.P = P
+        self.I = I
+        self.D = D
+        self.pidFirst = PidRegulator(P, I, D)
+        # ToDo To implement Second Regulator
+        self.pidSecond = PidRegulator(P, I, D)
+        self.pidFirst.output_limits = (first_pid_min_output, first_pid_max_output)
+        self.pidSecond.output_limits = (second_pid_min_output, second_pid_max_output)
+        self.total_sampling = total_sampling
+        self.sampling_i = 0
+        self.measurement = 0
+        self.feedback = 0
+
+        print('PID controller is running..')
+
+    def run_pid_controller(self):
+        try:
+            while 1:
+                temperature = random.randint(0,
+                                             30)  # zasymulować jakoś dane które reagują na feedback - najlepiej przy pomocy PID
+                if temperature is not None:
+                    if self.pidFirst.setpoint > 0:
+                        self.feedback = temperature
+                output = self.pidFirst(self.feedback)
+                print('i={0} desired.temp={1:0.1f}*C temp={2:0.1f}*C pid.out = {3: 0.1f}feedback = {4: 0.1f}'.format(
+                    self.sampling_i,
+                    self.pidFirst.setpoint,
+                    temperature,
+                    output,
+                    self.feedback))
+                if self.sampling_i < 20:
+                    self.pidFirst.setpoint = 28  # celsius
+                if 20 < self.sampling_i < 40:
+                    self.pidFirst.setpoint = 25  # celsius
+                if 40 < self.sampling_i < 60:
+                    self.pidFirst.setpoint = 20  # celsius
+                if 60 < self.sampling_i < 80:
+                    self.pidFirst.setpoint = 25  # celsius
+                if self.sampling_i > 80:
+                    self.pidFirst.setpoint = 28  # celsius
+                time.sleep(1)
+                self.sampling_i += 1
+                ChartGenerator.feedback_list.append(self.feedback)
+                ChartGenerator.setpoint_list.append(self.pidFirst.setpoint)
+                ChartGenerator.time_list.append(self.sampling_i)
+                if self.sampling_i >= self.total_sampling:
+                    break
+        except KeyboardInterrupt:
+            print("exit")
+
+        print("pid controller done.")
+        print("generating a report...")
+        print_chart(self.total_sampling)
+        print("finish")
 
 
 
-P = 1
-I = 0.01
-D = 0.1
-pidFirst = PidRegulator(P, I, D)
-#ToDo To implement Second Regulator
-pidSecond = PidRegulator(P, I, D)
-pidFirst.output_limits = (10, 40)
-pidSecond.output_limits = (0,100)
-total_sampling = 100
-sampling_i = 0
-measurement = 0
-feedback = 0
 
-feedback_list = []
-time_list = []
-setpoint_list = []
 
-print('PID controller is running..')
-try:
-    while 1:
-        temperature = random.randint(0, 30) # zasymulować jakoś dane które reagują na feedback - najlepiej przy pomocy PID
-        if temperature is not None:
-            if pidFirst.setpoint > 0:
-                feedback = temperature
-        output = pidFirst(feedback)
-        print('i={0} desired.temp={1:0.1f}*C temp={2:0.1f}*C pid.out = {3: 0.1f}feedback = {4: 0.1f}'.format(sampling_i, pidFirst.setpoint, temperature, output, feedback))
-
-        if  sampling_i < 20:
-            pidFirst.setpoint = 28  # celsius
-        if  20 < sampling_i < 40:
-            pidFirst.setpoint = 25  # celsius
-        if 40 < sampling_i < 60:
-            pidFirst.setpoint = 20  # celsius
-        if 60 < sampling_i < 80:
-            pidFirst.setpoint = 25  # celsius
-        if sampling_i > 80:
-            pidFirst.setpoint = 28  # celsius
-        time.sleep(1)
-        sampling_i += 1
-        feedback_list.append(feedback)
-        setpoint_list.append(pidFirst.setpoint)
-        time_list.append(sampling_i)
-        if sampling_i >= total_sampling:
-            break
-except KeyboardInterrupt:
-    print("exit")
-
-print("pid controller done.")
-print("generating a report...")
-time_sm = np.array(time_list)
-time_smooth = np.linspace(time_sm.min(), time_sm.max(), 300)
-helper_x3 = make_interp_spline(time_list, feedback_list)
-feedback_smooth = helper_x3(time_smooth)
-fig1 = plt.gcf()
-fig1.subplots_adjust(bottom=0.15, left=0.1)
-plt.plot(time_smooth, feedback_smooth, color='red')
-plt.plot(time_list, setpoint_list, color='blue')
-plt.xlim((0, total_sampling))
-plt.ylim((min(feedback_list) - 0.5, max(feedback_list) + 0.5))
-plt.xlabel('time (s)')
-plt.ylabel('PID (PV)')
-plt.title('Temperature PID Controller')
-plt.grid(True)
-fig1.savefig('pid_temperature.png', dpi=100)
-print("finish")
