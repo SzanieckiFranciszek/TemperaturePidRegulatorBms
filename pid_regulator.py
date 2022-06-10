@@ -31,7 +31,8 @@ class PidRegulator(object):
         Ki=0.0,
         Kd=0.0,
         setpoint=0,
-        sample_time=0.01,
+        # sample_time=0.01,
+        sample_time=1,
         output_limits=(None, None),
         auto_mode=True,
         proportional_on_measurement=False,
@@ -123,7 +124,7 @@ class PidRegulator(object):
         self._derivative = -self.Kd * d_input / dt
 
         # Compute final output
-        output = self._proportional + self._integral + self._derivative
+        output = self._proportional + self._integral #+ self._derivative
         output = _clamp(output, self.output_limits)
 
         # Keep track of state
