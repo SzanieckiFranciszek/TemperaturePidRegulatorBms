@@ -13,7 +13,8 @@ def print_chart(total_sampling):
 
 class PythonPID:
 
-    def __init__(self, P1=1.0, I1=0.25, D1=0.0, P2=1.0, I2=0.5, D2=0.0, first_pid_min_output=10, first_pid_max_output=40, second_pid_min_output=0,
+    def __init__(self, P1=1.0, I1=0.25, D1=0.0, P2=1.0, I2=0.5, D2=0.0, first_pid_min_output=10,
+                 first_pid_max_output=40, second_pid_min_output=0,
                  second_pid_max_output=100, total_sampling=2000):
         self.P1 = P1
         self.I1 = I1
@@ -31,15 +32,14 @@ class PythonPID:
         self.outdoor_temperature = 10
         self.pidFirst.setpoint = 22
 
-        self.loss_heat = 0.153424 # utrata ciepla w pomieszczeniu
-         # init
-        self.output_first_regulator=0
+        self.loss_heat = 0.153424  # utrata ciepla w pomieszczeniu
+        self.output_first_regulator = 0
         self.output_second_regulator = 0
 
         self.supply_temperature = self.outdoor_temperature
         self.room_temperature = self.outdoor_temperature
 
-        print('PID controller is running..')
+        print('PI controller is running..')
 
     def run_pid_controller(self):
         try:
@@ -49,37 +49,29 @@ class PythonPID:
 
                 self.output_first_regulator = self.pidFirst(self.room_temperature)
 
-                print('PID 1 : i={0} SP room temp={1:0.1f}*C measured room temp={2:0.1f}*C pid out value = {3: 0.1f}*C '.format(
-                    self.sampling_i,
-                    self.pidFirst.setpoint,
-                    self.room_temperature,
-                    self.output_first_regulator))
-
-                # self.feedback_second_regulator = ventilation_temperature
+                print(
+                    'PID 1 : i={0} SP room temp={1:0.1f}*C measured room temp={2:0.1f}*C pid out value = {3: 0.1f}*C '.format(
+                        self.sampling_i,
+                        self.pidFirst.setpoint,
+                        self.room_temperature,
+                        self.output_first_regulator))
 
                 self.pidSecond.setpoint = self.output_first_regulator
 
                 self.output_second_regulator = self.pidSecond(self.supply_temperature)
 
-                print('PID 2 : i={0} SP supply temp={1:0.1f}*C measured ventilator temp={2:0.1f}*C pid out value = {3: 0.1f}%  '.format(
-                    self.sampling_i,
-                    self.pidSecond.setpoint,
-                    self.supply_temperature,
-                    self.output_second_regulator))
-                print('-----------------------------------------------------------------------------------------------------')
+                print(
+                    'PID 2 : i={0} SP supply temp={1:0.1f}*C measured ventilator temp={2:0.1f}*C pid out value = {3: 0.1f}%  '.format(
+                        self.sampling_i,
+                        self.pidSecond.setpoint,
+                        self.supply_temperature,
+                        self.output_second_regulator))
+
+                print(
+                    '-----------------------------------------------------------------------------------------------------')
 
                 if 500 < self.sampling_i:
-                    self.pidFirst.setpoint = 24  # celsius
-                # if 20 < self.sampling_i < 40:
-                #     self.
-            #     pidFirst.setpoint = 25  # celsius
-                # if 40 < self.sampling_i < 60:
-                #     self.pidFirst.setpoint = 20  # celsius
-                # if 60 < self.sampling_i < 80:
-                #     self.pidFirst.setpoint = 25  # celsius
-                # if self.sampling_i > 80:
-                #     self.pidFirst.setpoint = 28  # celsius
-
+                    self.pidFirst.setpoint = 24
                 time.sleep(0.1)
                 self.sampling_i += 1
                 ChartGenerator.feedback_list.append(self.feedback)
@@ -91,9 +83,4 @@ class PythonPID:
         except KeyboardInterrupt:
             print("exit")
 
-        print_chart(self.total_sampling)
-
-
-
-
-
+        # print_chart(self.total_sampling)

@@ -17,7 +17,6 @@ try:
     # Get monotonic time to ensure that time deltas are always positive
     _current_time = time.monotonic
 except AttributeError:
-    # time.monotonic() not available (using python < 3.3), fallback to time.time()
     _current_time = time.time
     warnings.warn('time.monotonic() not available in python < 3.3, using time.time() as fallback')
 
@@ -31,11 +30,8 @@ class PidRegulator(object):
         Ki=0.0,
         Kd=0.0,
         setpoint=0,
-        # sample_time=0.01,
         sample_time=1,
         output_limits=(None, None),
-        auto_mode=True,
-        proportional_on_measurement=False,
         error_map=None,
     ):
         """
@@ -66,8 +62,6 @@ class PidRegulator(object):
         self.sample_time = sample_time
 
         self._min_output, self._max_output = None, None
-        # self._auto_mode = auto_mode
-        # self.proportional_on_measurement = proportional_on_measurement
         self.error_map = error_map
 
         self._proportional = 0
@@ -92,8 +86,6 @@ class PidRegulator(object):
         :param dt: If set, uses this value for timestep instead of real time. This can be used in
             simulations when simulation time is different from real time.
         """
-        # if not self.auto_mode:
-        #     return self._last_output
 
         now = _current_time()
         if dt is None:
@@ -133,50 +125,6 @@ class PidRegulator(object):
         self._last_time = now
 
         return output
-
-    # def __repr__(self):
-    #     return (
-    #         '{self.__class__.__name__}('
-    #         'Kp={self.Kp!r}, Ki={self.Ki!r}, Kd={self.Kd!r}, '
-    #         'setpoint={self.setpoint!r}, sample_time={self.sample_time!r}, '
-    #         'output_limits={self.output_limits!r}, auto_mode={self.auto_mode!r}, '
-    #         'proportional_on_measurement={self.proportional_on_measurement!r},'
-    #         'error_map={self.error_map!r}'
-    #         ')'
-    #     ).format(self=self)
-
-    # @property
-    # def auto_mode(self):
-    #     """Whether the controller is currently enabled (in auto mode) or not."""
-    #     return self._auto_mode
-    #
-    # @auto_mode.setter
-    # def auto_mode(self, enabled):
-    #     """Enable or disable the PID controller."""
-    #     self.set_auto_mode(enabled)
-    #
-    # def set_auto_mode(self, enabled, last_output=None):
-    #     """
-    #     Enable or disable the PID controller, optionally setting the last output value.
-    #
-    #     This is useful if some system has been manually controlled and if the PID should take over.
-    #     In that case, disable the PID by setting auto mode to False and later when the PID should
-    #     be turned back on, pass the last output variable (the control variable) and it will be set
-    #     as the starting I-term when the PID is set to auto mode.
-    #
-    #     :param enabled: Whether auto mode should be enabled, True or False
-    #     :param last_output: The last output, or the control variable, that the PID should start
-    #         from when going from manual mode to auto mode. Has no effect if the PID is already in
-    #         auto mode.
-    #     """
-    #     if enabled and not self._auto_mode:
-    #         # Switching from manual mode to auto, reset
-    #         self.reset()
-    #
-    #         self._integral = last_output if (last_output is not None) else 0
-    #         self._integral = _clamp(self._integral, self.output_limits)
-    #
-    #     self._auto_mode = enabled
 
     @property
     def output_limits(self):
